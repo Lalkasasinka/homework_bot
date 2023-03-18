@@ -109,6 +109,9 @@ def check_response(response):
     if type(homework) != list:
         message = 'Неккоректное значение в ответе у домашней работы'
         raise TypeError(message)
+    if homework == []:
+        message = 'Домашних работ не обнаружено!'
+        raise EmptyDictorListError(message)
     return homework[0]
 
 
