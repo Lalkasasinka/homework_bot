@@ -109,13 +109,14 @@ def check_response(response):
     if type(homework) != list:
         message = 'Неккоректное значение в ответе у домашней работы'
         raise TypeError(message)
-    return homework
+    return homework[0]
 
 
 def parse_status(homework):
     """Проверка статуса задания."""
-    homework_name = homework[0]['homework_name']
-    homework_status = homework[0]['status']
+    if 'homework_name' in homework:
+        homework_name = homework['homework_name']
+    homework_status = homework['status']
     if not (homework_status in HOMEWORK_VERDICTS):
         message_error = f'Пустой статус: {homework_status}'
         raise StatusResponceError(message_error)

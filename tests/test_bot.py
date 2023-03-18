@@ -279,15 +279,15 @@ class TestHomework:
             self.HOMEWORK_FUNC_WITH_PARAMS_QTY[func_name]
         )
 
-        test_data = [{
+        test_data = {
             "id": 123,
             "homework_name": "Homework test",
             "reviewer_comment": "Всё нравится",
             "date_updated": "2020-02-13T14:40:57Z",
             "lesson_name": "Итоговый проект"
-        }]
+        }
         for status_key in self.HOMEWORK_VERDICTS.keys():
-            test_data[0]['status'] = status_key
+            test_data['status'] = status_key
 
             result = homework_module.parse_status(test_data)
             assert isinstance(result, str), (
@@ -295,7 +295,7 @@ class TestHomework:
             )
             assert result.startswith(
                 'Изменился статус проверки работы '
-                f'"{test_data[0]["homework_name"]}"'
+                f'"{test_data["homework_name"]}"'
             ), (
                 f'Проверьте, что в ответе функции `{func_name}` содержится '
                 'название домашней работы.'
