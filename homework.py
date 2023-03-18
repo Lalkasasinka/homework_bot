@@ -6,27 +6,10 @@ import telegram
 import requests
 import logging
 from http import HTTPStatus
-
-
-class IsNot200Error(Exception):
-    """Ответ сервер не 200."""
-
-
-class EmptyDictorListError(Exception):
-    """Пустой словарь или список."""
-
-
-class StatusResponceError(Exception):
-    """Ошибка статуса документа."""
-
-
-class ApiError(Exception):
-    """Ошибка в запросе API."""
-
-
-class JSONDecoderError(Exception):
-    """Ошибка с Json файлом."""
-
+from exceptions import (IsNot200Error, ApiError,
+                        EmptyDictorListError,
+                        StatusResponceError,
+                        JSONDecoderError)
 
 load_dotenv()
 
@@ -71,7 +54,7 @@ def send_message(bot, message):
         bot.send_message(TELEGRAM_CHAT_ID, message)
         message_info = f'Сообщение отправлено: {message}'
         logger.debug(message_info)
-    except telegram.TelegramError:
+    except Exception:
         message_error = f'Сообщение не удалось отправить: {message}'
         logger.error(message_error)
 
@@ -98,7 +81,7 @@ def get_api_answer(timestamp):
 
 def check_response(response):
     """Проверка валидности полученных данных."""
-    if type(response) != dict:
+    if not isinstance(response, dict):
         response_type = type(response)
         message = f'Ответ пришел в неккоректном формате: {response_type}'
         raise TypeError(message)
@@ -106,7 +89,7 @@ def check_response(response):
         message = 'В ответе отсутствуют необходимые ключи'
         raise KeyError(message)
     homework = response.get('homeworks')
-    if type(homework) != list:
+    if not isinstance(homework, list):
         message = 'Неккоректное значение в ответе у домашней работы'
         raise TypeError(message)
     if homework == []:
@@ -117,15 +100,17 @@ def check_response(response):
 
 def parse_status(homework):
     """Проверка статуса задания."""
-    if 'homework_name' in homework:
-        homework_name = homework['homework_name']
+    if 'homework_name' not in homework:
+        message = 'В ответе отсутствуют необходимые ключи'
+        raise KeyError(message)
+    homework_name = homework['homework_name']
+    if 'status' not in homework:
+        message = 'В ответе отсутствуют необходимые ключи'
+        raise KeyError(message)
     homework_status = homework['status']
-    if not (homework_status in HOMEWORK_VERDICTS):
+    if homework_status not in HOMEWORK_VERDICTS:
         message_error = f'Пустой статус: {homework_status}'
         raise StatusResponceError(message_error)
-    if homework_name is None:
-        message_error = f'Пустое имя работы: {homework_name}'
-        raise KeyError(message_error)
     verdict = HOMEWORK_VERDICTS[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
@@ -138,13 +123,16 @@ def main():
     send_message(bot, 'Бот включен')
     timestamp = int(time.time())
     LAST_ERROR = ''
+    last_message = ''
     while True:
         try:
             response = get_api_answer(timestamp)
             homework = check_response(response)
             if homework:
                 message = parse_status(homework)
-                send_message(bot, message)
+                if message != last_message:
+                    last_message = message
+                    send_message(bot, message)
             else:
                 logger.debug('Нет нового статуса')
         except Exception as error:
