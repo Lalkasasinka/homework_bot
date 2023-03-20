@@ -59,24 +59,27 @@ def send_message(bot, message):
         logger.error(message_error)
 
 
-def get_api_answer(timestamp):
-    """Делает запрос к единственному эндпоинту API-сервиса."""
-    current_timestamp = timestamp
-    params = {'from_date': current_timestamp}
-    try:
-        response = requests.get(url=ENDPOINT, headers=HEADERS, params=params)
-        status_code = response.status_code
-        if status_code != HTTPStatus.OK:
-            message_error = (f'API {ENDPOINT} недоступен, '
-                             f'код ошибки {status_code}')
-            raise IsNot200Error(message_error)
-        return response.json()
-    except requests.exceptions.RequestException as error:
-        message_error = f'Ошибка в запроссе API: {error}'
+def get_api_answer(timestamp): 
+
+    """Делает запрос к единственному эндпоинту API-сервиса.""" 
+    current_timestamp = timestamp 
+    params = {'from_date': current_timestamp} 
+    try: 
+        response = requests.get(url=ENDPOINT, headers=HEADERS, params=params) 
+    except Exception as error:
+        message_error = f'Ошибка в запроссе API: {error}' 
         raise ApiError(message_error)
-    except json.JSONDecodeError as json_error:
-        message_error = f'Ошибка json: {json_error}'
+    status_code = response.status_code 
+    if status_code != HTTPStatus.OK:
+        message_error = (f'API {ENDPOINT} недоступен, ' 
+                         f'код ошибки {status_code}') 
+        raise IsNot200Error(message_error)
+    try:
+        response.json()
+    except json.JSONDecodeError as json_error: 
+        message_error = f'Ошибка json: {json_error}' 
         raise JSONDecoderError(message_error) from json_error
+    return response.json()
 
 
 def check_response(response):
@@ -88,7 +91,7 @@ def check_response(response):
     if 'homeworks' not in response:
         message = 'В ответе отсутствуют необходимые ключи'
         raise KeyError(message)
-    homework = response.get('homeworks')
+    homework = response['homeworks']
     if not isinstance(homework, list):
         message = 'Неккоректное значение в ответе у домашней работы'
         raise TypeError(message)
@@ -122,7 +125,6 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     send_message(bot, 'Бот включен')
     timestamp = int(time.time())
-    LAST_ERROR = ''
     last_message = ''
     while True:
         try:
@@ -132,14 +134,14 @@ def main():
                 message = parse_status(homework)
                 if message != last_message:
                     last_message = message
-                    send_message(bot, message)
+                    send_message(bot, message)  
             else:
                 logger.debug('Нет нового статуса')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logger.error(message)
-            if message != LAST_ERROR:
-                LAST_ERROR = message
+            if message != last_message:
+                last_message = message
                 send_message(bot, message)
         finally:
             time.sleep(RETRY_PERIOD)
