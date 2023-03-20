@@ -59,25 +59,24 @@ def send_message(bot, message):
         logger.error(message_error)
 
 
-def get_api_answer(timestamp): 
-
-    """Делает запрос к единственному эндпоинту API-сервиса.""" 
-    current_timestamp = timestamp 
-    params = {'from_date': current_timestamp} 
-    try: 
-        response = requests.get(url=ENDPOINT, headers=HEADERS, params=params) 
+def get_api_answer(timestamp):
+    """Делает запрос к единственному эндпоинту API-сервиса."""
+    current_timestamp = timestamp
+    params = {'from_date': current_timestamp}
+    try:
+        response = requests.get(url=ENDPOINT, headers=HEADERS, params=params)
     except Exception as error:
-        message_error = f'Ошибка в запроссе API: {error}' 
+        message_error = f'Ошибка в запроссе API: {error}'
         raise ApiError(message_error)
-    status_code = response.status_code 
+    status_code = response.status_code
     if status_code != HTTPStatus.OK:
-        message_error = (f'API {ENDPOINT} недоступен, ' 
-                         f'код ошибки {status_code}') 
+        message_error = (f'API {ENDPOINT} недоступен, '
+                         f'код ошибки {status_code}')
         raise IsNot200Error(message_error)
     try:
         response.json()
-    except json.JSONDecodeError as json_error: 
-        message_error = f'Ошибка json: {json_error}' 
+    except json.JSONDecodeError as json_error:
+        message_error = f'Ошибка json: {json_error}'
         raise JSONDecoderError(message_error) from json_error
     return response.json()
 
@@ -134,7 +133,7 @@ def main():
                 message = parse_status(homework)
                 if message != last_message:
                     last_message = message
-                    send_message(bot, message)  
+                    send_message(bot, message)
             else:
                 logger.debug('Нет нового статуса')
         except Exception as error:
